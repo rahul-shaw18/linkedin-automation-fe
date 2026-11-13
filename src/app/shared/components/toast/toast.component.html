@@ -1,0 +1,101 @@
+<div rdxToastPortal>
+  <ol
+    rdxToastViewport
+    aria-label="Notifications"
+    class="fixed bottom-5 right-5 z-50 w-92 max-w-[calc(100vw-2.5rem)] pointer-events-none box-border flex flex-col justify-end list-none p-0 m-0"
+  >
+    @for (toast of toastManager.toasts(); track toast.id) {
+      <li
+        rdxToastRoot
+        [toast]="toast"
+        [swipeDirection]="['right', 'down']"
+        class="absolute bottom-0 right-0 w-full pointer-events-auto origin-bottom select-none touch-none rounded-2xl border px-4 py-3.5 shadow-lg transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] z-[calc(50-var(--toast-index,0))] after:content-[''] after:absolute after:inset-x-0 after:-top-3 after:h-3 after:pointer-events-auto translate-y-[calc(var(--toast-index,0)*-12px)] scale-[calc(1-var(--toast-index,0)*0.05)] opacity-[calc(1-var(--toast-index,0)*0.15)] [style*='--toast-index:\ 3']:opacity-0 [style*='--toast-index:\ 3']:pointer-events-none [style*='--toast-index:\ 4']:opacity-0 [style*='--toast-index:\ 4']:pointer-events-none data-[expanded]:translate-y-[calc(-1*(var(--toast-offset-y,0px)+var(--toast-index,0)*10px))] data-[expanded]:scale-100 data-[expanded]:opacity-100 data-[swiping]:translate-x-[var(--toast-swipe-movement-x,0px)] data-[swiping]:translate-y-[var(--toast-swipe-movement-y,0px)] data-[swiping]:transition-none data-[state=open]:animate-toast-in data-[state=closed]:animate-toast-out data-[state=closed]:pointer-events-none"
+        [class]="
+          toast.type === 'success'
+            ? 'bg-success-50 text-success-900 border-success-200 shadow-success-900/10'
+            : toast.type === 'error'
+              ? 'bg-error-50 text-error-900 border-error-200 shadow-error-900/10'
+              : toast.type === 'warning'
+                ? 'bg-warning-50 text-warning-900 border-warning-200 shadow-warning-900/10'
+                : toast.type === 'info'
+                  ? 'bg-info-50 text-info-900 border-info-200 shadow-info-900/10'
+                  : 'bg-secondary-900 text-white border-secondary-800 shadow-black/20'
+        "
+      >
+        <div rdxToastContent class="flex items-start gap-3 w-full">
+          @if (toast.loading) {
+            <app-icon
+              name="loader"
+              class="text-primary-600 text-base shrink-0 mt-0.5 animate-spin"
+            />
+          } @else {
+            @switch (toast.type) {
+              @case ('success') {
+                <app-icon name="circle-check" class="text-success-600 text-base shrink-0 mt-0.5" />
+              }
+              @case ('error') {
+                <app-icon
+                  name="circle-alert"
+                  class="text-error-600 text-base shrink-0 mt-0.5 animate-bounce"
+                />
+              }
+              @case ('warning') {
+                <app-icon name="alert" class="text-warning-600 text-base shrink-0 mt-0.5" />
+              }
+              @case ('info') {
+                <app-icon name="info" class="text-info-600 text-base shrink-0 mt-0.5" />
+              }
+              @default {
+                <app-icon name="info" class="text-secondary-300 text-base shrink-0 mt-0.5" />
+              }
+            }
+          }
+
+          <div class="min-w-0 flex-1">
+            @if (toast.title) {
+              <p rdxToastTitle class="font-bold leading-tight">{{ toast.title }}</p>
+            }
+            @if (toast.description) {
+              <p rdxToastDescription class="font-normal text-xs opacity-90 mt-0.5 leading-snug">
+                {{ toast.description }}
+              </p>
+            }
+
+            @if (toast.actionProps; as action) {
+              <button
+                rdxToastAction
+                type="button"
+                (click)="runAction(toast, $event)"
+                class="mt-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold transition-colors cursor-pointer border"
+                [class]="
+                  toast.type === 'success'
+                    ? 'bg-success-100 hover:bg-success-200 text-success-900 border-success-300'
+                    : toast.type === 'error'
+                      ? 'bg-error-100 hover:bg-error-200 text-error-900 border-error-300'
+                      : toast.type === 'warning'
+                        ? 'bg-warning-100 hover:bg-warning-200 text-warning-900 border-warning-300'
+                        : toast.type === 'info'
+                          ? 'bg-info-100 hover:bg-info-200 text-info-900 border-info-300'
+                          : 'bg-secondary-800 hover:bg-secondary-700 text-white border-secondary-700'
+                "
+              >
+                {{ action.label }}
+              </button>
+            }
+          </div>
+
+          @if (!toast.loading) {
+            <button
+              rdxToastClose
+              type="button"
+              aria-label="Dismiss"
+              class="p-0.5 -mr-1 -mt-0.5 rounded cursor-pointer transition-colors opacity-70 hover:opacity-100"
+            >
+              <app-icon name="x" class="text-xs" />
+            </button>
+          }
+        </div>
+      </li>
+    }
+  </ol>
+</div>

@@ -1,0 +1,37 @@
+<span
+  class="cursor-help inline-block"
+  [title]="
+    status() === 'PENDING' ? 'Scheduled to be published by cron at designated time' :
+    status() === 'PROCESSING' ? 'In transit to LinkedIn Content API' :
+    status() === 'PUBLISHED' ? 'Post is live on your personal LinkedIn feed' :
+    'Publication encountered an error. Click Retry or inspect below'
+  "
+>
+  @switch (status()) {
+    @case ('PENDING') {
+      <span appBadge [variant]="'warning'">
+        <app-icon name="clock" class="text-warning-500 text-xs animate-pulse" />
+        Pending Execution
+      </span>
+    }
+    @case ('PROCESSING') {
+      <span appBadge [variant]="'info'">
+        <app-icon name="loader" class="text-info-500 text-xs animate-spin" />
+        Publishing Now...
+      </span>
+    }
+    @case ('PUBLISHED') {
+      <span appBadge [variant]="'success'">
+        <app-icon name="check" class="text-success-600 text-xs" />
+        Published Live
+      </span>
+    }
+    @case ('FAILED') {
+      <span appBadge [variant]="'error'">
+        <app-icon name="alert" class="text-error-600 text-xs" />
+        Publish Failed
+      </span>
+    }
+  }
+</span>
+

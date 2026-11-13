@@ -1,0 +1,130 @@
+<article
+  class="bg-white rounded-2xl border border-secondary-200/80 p-5 shadow-xs hover:border-secondary-300 transition-all"
+>
+  <header class="flex items-start justify-between gap-3 mb-3">
+    <div class="flex items-center gap-2">
+      <app-post-status-badge [status]="post().status" />
+
+      <span class="text-xs text-secondary-500">
+        Scheduled:
+        <time [dateTime]="post().scheduledTime" class="font-bold text-secondary-700">{{
+          post().scheduledTime | date: 'medium'
+        }}</time>
+      </span>
+    </div>
+
+    <div class="flex items-center gap-1.5">
+      @if (post().status === 'PENDING') {
+        <app-confirm-dialog
+          [title]="'Cancel scheduled post?'"
+          [description]="'This post will be removed from your execution queue and will not be published to LinkedIn.'"
+          [confirmText]="'Yes, Cancel Post'"
+          [cancelText]="'Keep in Queue'"
+          [confirmVariant]="'destructive'"
+          (confirmed)="onCancel()"
+        >
+          <span
+            trigger
+            class="group inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-secondary-500 hover:text-error-600 hover:bg-error-50 rounded-lg transition-colors border border-transparent hover:border-error-100 cursor-pointer"
+          >
+            <app-icon
+              name="x"
+              class="text-xs transition-transform duration-200 group-hover:scale-110"
+            />
+            <span>Cancel</span>
+          </span>
+        </app-confirm-dialog>
+      }
+
+      @if (post().status === 'FAILED') {
+        <button appButton [variant]="'primary'" [size]="'sm'" (click)="onRetry()">
+          <app-icon
+            name="rotate-ccw"
+            class="text-xs transition-transform duration-500 group-hover:rotate-180"
+          />
+          <span>Retry</span>
+        </button>
+      }
+
+      <ng-container #postMenu="rdxMenuRoot" rdxMenuRoot>
+        <button
+          rdxMenuTrigger
+          type="button"
+          aria-label="Post actions"
+          class="p-1 text-secondary-400 hover:text-secondary-700 hover:bg-secondary-100 rounded-lg transition-colors cursor-pointer data-[popup-open]:bg-secondary-100 data-[popup-open]:text-secondary-800"
+        >
+          <app-icon name="ellipsis" class="text-base" />
+        </button>
+
+        <div
+          *rdxMenuPortal
+          rdxMenuPositioner
+          sideOffset="4"
+          align="end"
+          class="z-50 not-data-[side]:invisible"
+        >
+          <menu
+            class="w-48 p-1.5 bg-white rounded-xl shadow-xl border border-secondary-200 text-xs focus:outline-none data-[side]:animate-in data-[side]:fade-in data-[side]:zoom-in-95 data-[side]:duration-150 list-none m-0"
+          >
+            <li>
+              <button
+                rdxMenuItem
+                (click)="copyToClipboard(post().content, 'Post text')"
+                class="flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-secondary-700 hover:text-secondary-900 hover:bg-secondary-100 data-[highlighted]:bg-secondary-100 data-[highlighted]:text-secondary-900 transition-colors cursor-pointer select-none text-left font-medium outline-none"
+              >
+                <app-icon name="copy" class="text-xs text-secondary-500" />
+                <span>Copy Post Text</span>
+              </button>
+            </li>
+
+            @if (post().status === 'FAILED') {
+              <li rdxMenuSeparator class="h-px bg-secondary-100 my-1"></li>
+              <li>
+                <button
+                  rdxMenuItem
+                  (click)="onRetry()"
+                  class="flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-primary-600 hover:bg-primary-50 data-[highlighted]:bg-primary-50 transition-colors cursor-pointer select-none text-left font-medium outline-none"
+                >
+                  <app-icon name="rotate-ccw" class="text-xs" />
+                  <span>Retry Publication</span>
+                </button>
+              </li>
+            }
+
+            @if (post().status === 'PENDING') {
+              <li rdxMenuSeparator class="h-px bg-secondary-100 my-1"></li>
+              <li>
+                <button
+                  rdxMenuItem
+                  (click)="onCancel()"
+                  class="flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-error-600 hover:bg-error-50 data-[highlighted]:bg-error-50 transition-colors cursor-pointer select-none text-left font-medium outline-none"
+                >
+                  <app-icon name="trash" class="text-xs" />
+                  <span>Cancel Post</span>
+                </button>
+              </li>
+            }
+          </menu>
+        </div>
+      </ng-container>
+    </div>
+  </header>
+
+  <p
+    class="text-sm text-secondary-800 whitespace-pre-wrap leading-relaxed font-normal bg-secondary-50/70 p-3.5 rounded-xl border border-secondary-100"
+  >
+    {{ post().content }}
+  </p>
+
+  @if (post().status === 'FAILED' && post().failureReason) {
+    <div
+      class="mt-3 p-3 bg-error-50 text-error-800 rounded-xl border border-error-200 text-xs flex items-start gap-2.5"
+    >
+      <app-icon name="alert" class="text-sm text-error-600 shrink-0 mt-0.5" />
+      <div class="space-y-0.5 min-w-0">
+        <span class="font-semibold block text-error-900">Publication Failed</span>
+        <p class="text-xs text-error-700 leading-relaxed">{{ post().failureReason }}</p>
+      </div>
+    </div>
+  }
+</article>

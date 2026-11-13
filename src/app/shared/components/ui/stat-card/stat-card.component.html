@@ -1,0 +1,18 @@
+<article
+  class="group bg-white p-5 rounded-2xl border border-secondary-200/80 shadow-xs transition-all"
+  [class]="hoverBorderClass()"
+  [attr.aria-label]="title() + ': ' + value()"
+>
+  <header class="flex items-center justify-between">
+    <h3 class="text-xs font-medium" [class]="labelColorClass()">{{ title() }}</h3>
+    <div class="transition-transform duration-300 group-hover:scale-120" aria-hidden="true">
+      <ng-content select="[icon]" />
+    </div>
+  </header>
+  @if (loading()) {
+    <div class="h-8 w-16 bg-secondary-200 rounded animate-pulse mt-2"></div>
+  } @else {
+    <output class="block text-2xl font-bold mt-2" [class]="valueColorClass()">{{ value() }}</output>
+  }
+</article>
+

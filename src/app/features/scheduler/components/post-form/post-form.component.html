@@ -1,0 +1,131 @@
+<div class="bg-white rounded-2xl border border-secondary-200/80 shadow-xs p-6 mb-8">
+  <header class="flex items-center justify-between pb-4 mb-4 border-b border-secondary-100">
+    <div>
+      <h2 class="text-base font-bold text-secondary-900 tracking-tight flex items-center gap-2">
+        <span>Compose Scheduled Post</span>
+      </h2>
+      <p class="text-xs text-secondary-500 mt-0.5">
+        Queue a text commentary post to your personal LinkedIn feed.
+      </p>
+    </div>
+
+    <app-progress [value]="characterCount()" [max]="3000" label="Length" class="w-32" />
+  </header>
+
+  <form [formRoot]="postForm" class="space-y-4">
+    @if (state.isAccountLoading()) {
+      <div
+        class="p-3 bg-secondary-50/80 rounded-xl border border-secondary-200/70 space-y-2 animate-pulse"
+        role="status"
+        aria-label="Loading account..."
+      >
+        <div class="h-3 w-40 bg-secondary-200 rounded"></div>
+        <div class="h-10 w-52 bg-secondary-200 rounded-xl"></div>
+      </div>
+    } @else if (state.activeAccount(); as account) {
+      <div
+        class="p-3 bg-secondary-50/80 rounded-xl border border-secondary-200/70 flex items-center justify-between gap-3"
+      >
+        <div class="flex items-center gap-2.5 min-w-0">
+          @if (account.pictureUrl) {
+            <img
+              [src]="account.pictureUrl"
+              class="w-8 h-8 rounded-full object-cover shrink-0 border border-secondary-200"
+              alt=""
+            />
+          } @else {
+            <div
+              class="w-8 h-8 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center shrink-0"
+            >
+              <app-icon name="user" class="text-xs" />
+            </div>
+          }
+          <div class="min-w-0">
+            <div class="flex items-center gap-1.5">
+              <span class="text-xs font-semibold text-secondary-900 truncate">{{
+                account.name || account.userId
+              }}</span>
+              <span
+                class="text-xs font-medium text-primary-700 bg-primary-50 border border-primary-200/80 px-1.5 py-0.5 rounded-full shrink-0"
+                >Personal Profile</span
+              >
+            </div>
+            <span class="block text-xs text-secondary-500 truncate"
+              >Post will be scheduled and published to your LinkedIn feed</span
+            >
+          </div>
+        </div>
+      </div>
+    } @else {
+      <div
+        class="p-3.5 bg-secondary-50/80 rounded-xl border border-secondary-200/70 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+      >
+        <div class="flex items-center gap-3">
+          <div
+            class="w-8 h-8 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center shrink-0 border border-primary-100"
+          >
+            <app-icon name="linkedin" class="text-base" />
+          </div>
+          <div>
+            <span class="text-xs font-semibold text-secondary-800 block"
+              >No LinkedIn Account Connected</span
+            >
+            <p class="text-xs text-secondary-500">
+              Connect your LinkedIn account to start scheduling posts.
+            </p>
+          </div>
+        </div>
+      </div>
+    }
+
+    <div>
+      <label rdxLabel htmlFor="post-content" class="sr-only">Post Commentary</label>
+      <textarea
+        id="post-content"
+        rows="4"
+        [formField]="postForm.content"
+        placeholder="What do you want to share with your professional network? Use #hashtags and clean formatting..."
+        class="w-full px-4 py-3 text-sm text-secondary-800 placeholder-secondary-400 bg-secondary-50 border border-secondary-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all resize-y min-h-27.5"
+      ></textarea>
+    </div>
+
+    <fieldset class="flex flex-wrap items-center gap-1.5 pt-1 border-0 p-0 m-0">
+      <legend class="text-xs text-secondary-400 mr-1 font-medium inline-block float-left">
+        Add tag:
+      </legend>
+      @for (tag of suggestedTags; track tag) {
+        <button
+          type="button"
+          appButton
+          [variant]="'secondary'"
+          [size]="'sm'"
+          (click)="appendTag(tag)"
+          title="Insert {{ tag }}"
+        >
+          {{ tag }}
+        </button>
+      }
+    </fieldset>
+
+    <hr class="border-t border-secondary-200/80 my-2" />
+
+    <app-schedule-picker [(targetTime)]="targetTime" />
+
+    <footer class="flex items-center justify-end pt-2">
+      <button
+        appButton
+        [type]="'submit'"
+        [variant]="'primary'"
+        [size]="'lg'"
+        [loading]="postForm().submitting() || state.isActionLoading()"
+        [disabled]="postForm().invalid() || !state.activeAccount() || state.isAccountLoading()"
+      >
+        <app-icon
+          name="send"
+          class="text-sm transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+        />
+        <span>Confirm & Schedule Post</span>
+      </button>
+    </footer>
+  </form>
+</div>

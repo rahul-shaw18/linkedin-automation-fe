@@ -1,0 +1,143 @@
+<section rdxTabsRoot [value]="state.filter()" (valueChange)="onTabChange($event)" class="space-y-4" aria-labelledby="queue-heading">
+  <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-secondary-200">
+    <div>
+      <h2 id="queue-heading" class="text-base font-bold text-secondary-900 tracking-tight flex items-center gap-2">
+        <span>Queue & Publishing History</span>
+      </h2>
+      <p class="text-xs text-secondary-500">Live posts monitored and scheduled for your LinkedIn profile.</p>
+    </div>
+
+    <nav
+      rdxTabsList
+      class="inline-flex items-center p-1 bg-secondary-100 rounded-xl text-xs font-semibold gap-1"
+      aria-label="Filter posts by status"
+    >
+      <button
+        rdxTabsTab
+        value="ALL"
+        type="button"
+        class="px-3 py-1.5 rounded-lg transition-all cursor-pointer data-[state=active]:bg-white data-[state=active]:text-secondary-900 data-[state=active]:shadow-xs data-[active]:bg-white data-[active]:text-secondary-900 data-[active]:shadow-xs text-secondary-600 hover:text-secondary-900 focus-visible:outline-2 focus-visible:outline-primary-600"
+      >
+        All ({{ state.counts().all }})
+      </button>
+      <button
+        rdxTabsTab
+        value="PENDING"
+        type="button"
+        class="px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 data-[state=active]:bg-white data-[state=active]:text-warning-800 data-[state=active]:shadow-xs data-[active]:bg-white data-[active]:text-warning-800 data-[active]:shadow-xs text-secondary-600 hover:text-secondary-900 focus-visible:outline-2 focus-visible:outline-warning-600"
+      >
+        <span class="w-1.5 h-1.5 rounded-full bg-warning-500 animate-pulse"></span>
+        Pending ({{ state.counts().pending }})
+      </button>
+      <button
+        rdxTabsTab
+        value="PUBLISHED"
+        type="button"
+        class="px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 data-[state=active]:bg-white data-[state=active]:text-success-800 data-[state=active]:shadow-xs data-[active]:bg-white data-[active]:text-success-800 data-[active]:shadow-xs text-secondary-600 hover:text-secondary-900 focus-visible:outline-2 focus-visible:outline-success-600"
+      >
+        <span class="w-1.5 h-1.5 rounded-full bg-success-500"></span>
+        Published ({{ state.counts().published }})
+      </button>
+      <button
+        rdxTabsTab
+        value="FAILED"
+        type="button"
+        class="px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 data-[state=active]:bg-white data-[state=active]:text-error-800 data-[state=active]:shadow-xs data-[active]:bg-white data-[active]:text-error-800 data-[active]:shadow-xs text-secondary-600 hover:text-secondary-900 focus-visible:outline-2 focus-visible:outline-error-600"
+      >
+        <span class="w-1.5 h-1.5 rounded-full bg-error-500"></span>
+        Failed ({{ state.counts().failed }})
+      </button>
+    </nav>
+  </header>
+
+  <div rdxTabsPanel [value]="state.filter()" class="space-y-3">
+    @if (state.isSessionChecking() || (state.posts.isLoading() && state.posts.value().length === 0)) {
+      <div class="space-y-3" role="status" aria-label="Loading scheduled posts...">
+        <div class="bg-white rounded-2xl border border-secondary-200/80 p-5 shadow-xs space-y-3 animate-pulse">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="h-5 w-24 bg-secondary-200 rounded-md"></div>
+              <div class="h-4 w-36 bg-secondary-100 rounded-md"></div>
+            </div>
+            <div class="h-6 w-16 bg-secondary-100 rounded-md"></div>
+          </div>
+          <div class="space-y-2 pt-1">
+            <div class="h-4 bg-secondary-100 rounded-md w-5/6"></div>
+            <div class="h-4 bg-secondary-100 rounded-md w-1/2"></div>
+          </div>
+        </div>
+        <div class="bg-white rounded-2xl border border-secondary-200/80 p-5 shadow-xs space-y-3 animate-pulse">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="h-5 w-28 bg-secondary-200 rounded-md"></div>
+              <div class="h-4 w-40 bg-secondary-100 rounded-md"></div>
+            </div>
+            <div class="h-6 w-16 bg-secondary-100 rounded-md"></div>
+          </div>
+          <div class="space-y-2 pt-1">
+            <div class="h-4 bg-secondary-100 rounded-md w-3/4"></div>
+            <div class="h-4 bg-secondary-100 rounded-md w-1/3"></div>
+          </div>
+        </div>
+      </div>
+    } @else if (!state.activeAccount()) {
+      <app-empty-state
+        title="No LinkedIn Account Connected"
+        description="Connect your LinkedIn profile to view and manage scheduled posts."
+      >
+        <app-icon icon name="linkedin" class="text-3xl text-secondary-400" />
+        <div action class="mt-4 flex justify-center">
+          <button
+            appButton
+            [variant]="'primary'"
+            [size]="'sm'"
+            (click)="state.connectLinkedIn()"
+            [loading]="state.isActionLoading()"
+          >
+            <app-icon name="linkedin" class="text-xs" />
+            <span>Connect LinkedIn</span>
+          </button>
+        </div>
+      </app-empty-state>
+    } @else if (state.filteredPosts().length === 0) {
+      <app-empty-state
+        title="No posts in this view"
+        [description]="
+          state.filter() === 'ALL'
+            ? 'Compose a post above to schedule your first automated LinkedIn update!'
+            : 'There are currently no ' + state.filter().toLowerCase() + ' posts in queue.'
+        "
+      >
+        <app-icon icon name="inbox" class="text-2xl" />
+      </app-empty-state>
+    } @else {
+      <ul class="space-y-3 list-none p-0 m-0">
+        @for (post of state.filteredPosts(); track post.id; let idx = $index) {
+          <li>
+            @if (idx < 3) {
+              <app-post-card [post]="post" />
+            } @else {
+              @defer (on viewport) {
+                <app-post-card [post]="post" />
+              } @placeholder {
+                <div class="bg-white rounded-2xl border border-secondary-200/80 p-5 shadow-xs space-y-3 animate-pulse" role="status" aria-label="Loading scheduled post...">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <div class="h-5 w-24 bg-secondary-200 rounded-md"></div>
+                      <div class="h-4 w-36 bg-secondary-100 rounded-md"></div>
+                    </div>
+                    <div class="h-6 w-16 bg-secondary-100 rounded-md"></div>
+                  </div>
+                  <div class="space-y-2 pt-1">
+                    <div class="h-4 bg-secondary-100 rounded-md w-5/6"></div>
+                    <div class="h-4 bg-secondary-100 rounded-md w-1/2"></div>
+                  </div>
+                </div>
+              }
+            }
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</section>

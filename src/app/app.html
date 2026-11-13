@@ -1,0 +1,9 @@
+<div class="bg-secondary-50 flex flex-col h-screen">
+  <app-navbar />
+  <main class="flex-1 overflow-auto">
+    <router-outlet class="h-full" />
+  </main>
+  @defer (on idle) {
+    <app-toast />
+  }
+</div>
