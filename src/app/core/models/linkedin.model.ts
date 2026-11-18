@@ -22,9 +22,6 @@ export interface ScheduledPost {
   content: string;
   scheduledTime: string;
   status: PostStatus;
-  targetType?: 'PERSON' | 'ORGANIZATION';
-  targetUrn?: string | null;
-  targetName?: string | null;
   linkedInPostId?: string | null;
   failureReason?: string | null;
   createdAt: string;
@@ -43,9 +40,6 @@ export interface SchedulePostRequest {
   accountId: string;
   content: string;
   scheduledTime: string;
-  targetType?: 'PERSON' | 'ORGANIZATION';
-  targetUrn?: string;
-  targetName?: string;
 }
 
 export interface HealthResponse {

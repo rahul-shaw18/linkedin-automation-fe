@@ -96,7 +96,7 @@ export class SchedulerService {
         try {
           const payload = JSON.parse(event.data);
           if (payload.type === 'POST_PUBLISHED') {
-            const destName = payload.post?.targetName || 'LinkedIn';
+            const destName = payload.post?.account?.name || 'LinkedIn';
             this.toast.add({
               type: 'success',
               title: 'Post Published Live',
@@ -106,7 +106,7 @@ export class SchedulerService {
             });
             this.posts.reload();
           } else if (payload.type === 'POST_FAILED') {
-            const destName = payload.post?.targetName || 'LinkedIn';
+            const destName = payload.post?.account?.name || 'LinkedIn';
             const errorMsg =
               payload.post?.failureReason ||
               payload.reason ||
@@ -253,9 +253,6 @@ export class SchedulerService {
       accountId: account.id,
       content,
       scheduledTime,
-      targetType: 'PERSON',
-      targetUrn: undefined,
-      targetName: account.name || 'Personal Profile',
     };
 
     this.api.schedulePost(dto).subscribe({
