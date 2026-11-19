@@ -106,7 +106,11 @@ export class SchedulerService {
     const trigger = this.loginTrigger();
     if (trigger === undefined) return undefined;
     let url = `${this.api.baseUrl}/auth/linkedin/login-url`;
-    if (trigger) url += `?redirectUri=${encodeURIComponent(trigger)}`;
+    const params: string[] = [];
+    const uid = this.currentUserId();
+    if (uid) params.push(`userId=${encodeURIComponent(uid)}`);
+    if (trigger) params.push(`redirectUri=${encodeURIComponent(trigger)}`);
+    if (params.length) url += `?${params.join('&')}`;
     return url;
   });
 
