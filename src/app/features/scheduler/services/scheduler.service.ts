@@ -16,7 +16,9 @@ export class SchedulerService {
   private readonly api = inject(ApiService);
   private readonly toast = inject(RdxToastManager);
 
-  readonly currentUserId = signal<string>('');
+  readonly currentUserId = signal<string>(
+    typeof window !== 'undefined' ? localStorage.getItem('la_user_id') || '' : '',
+  );
   readonly filter = signal<'ALL' | PostStatus>('ALL');
   readonly session = httpResource<{
     authenticated: boolean;
@@ -125,12 +127,34 @@ export class SchedulerService {
           if (s.account) {
             this.accounts.set([s.account]);
           }
-        } else {
-          this.currentUserId.set('');
-          this.accounts.set([]);
-          this.posts.set([]);
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('la_user_id', s.userId);
+            } catch {}
+          }
+        } else if (s && !s.authenticated) {
+          const localUid =
+            typeof window !== 'undefined' ? localStorage.getItem('la_user_id') : null;
+          if (!localUid) {
+            this.currentUserId.set('');
+            this.accounts.set([]);
+            this.posts.set([]);
+          }
         }
       }
+    });
+
+    // Auto-refresh when posts are actively pending or processing as a fallback
+    effect((onCleanup) => {
+      const counts = this.counts();
+      const hasActivePosts = counts.pending > 0 || counts.processing > 0;
+      if (!hasActivePosts || typeof window === 'undefined') return;
+
+      const timer = setInterval(() => {
+        this.posts.reload();
+      }, 15000);
+
+      onCleanup(() => clearInterval(timer));
     });
 
     // 2. Reactive SSE connection management
@@ -279,9 +303,14 @@ export class SchedulerService {
       const sseUrl = `${this.api.baseUrl}/posts/events/${encodeURIComponent(userId)}`;
       this.eventSource = new EventSource(sseUrl, { withCredentials: true });
 
-      this.eventSource.onmessage = (event) => {
+      const handleEvent = (event: MessageEvent) => {
         try {
+          if (!event.data) return;
           const payload = JSON.parse(event.data);
+          if (payload.type === 'HEARTBEAT') return;
+
+          console.log('[SSE] Real-time event received:', payload.type, payload);
+
           if (payload.type === 'POST_PUBLISHED') {
             const destName = payload.post?.account?.name || 'LinkedIn';
             this.toast.add({
@@ -291,6 +320,21 @@ export class SchedulerService {
               priority: 'high',
               timeout: 6000,
             });
+
+            // Optimistically update signal immediately for instant UI change
+            if (payload.post?.id) {
+              this.posts.update((prev) =>
+                (prev ?? []).map((p) =>
+                  p.id === payload.post.id
+                    ? {
+                        ...p,
+                        ...payload.post,
+                        status: 'PUBLISHED' as const,
+                      }
+                    : p,
+                ),
+              );
+            }
             this.posts.reload();
           } else if (payload.type === 'POST_FAILED') {
             const destName = payload.post?.account?.name || 'LinkedIn';
@@ -305,10 +349,43 @@ export class SchedulerService {
               priority: 'high',
               timeout: 10000,
             });
+
+            if (payload.post?.id) {
+              this.posts.update((prev) =>
+                (prev ?? []).map((p) =>
+                  p.id === payload.post.id
+                    ? {
+                        ...p,
+                        ...payload.post,
+                        status: 'FAILED' as const,
+                        failureReason: errorMsg,
+                      }
+                    : p,
+                ),
+              );
+            }
             this.posts.reload();
           } else if (payload.type === 'POST_PROCESSING') {
+            if (payload.post?.id) {
+              this.posts.update((prev) =>
+                (prev ?? []).map((p) =>
+                  p.id === payload.post.id
+                    ? { ...p, status: 'PROCESSING' as const }
+                    : p,
+                ),
+              );
+            }
             this.posts.reload();
           } else if (payload.type === 'POST_UPDATED') {
+            if (payload.post?.id) {
+              this.posts.update((prev) =>
+                (prev ?? []).map((p) =>
+                  p.id === payload.post.id
+                    ? { ...p, ...payload.post }
+                    : p,
+                ),
+              );
+            }
             this.posts.reload();
           } else if (payload.type === 'POST_DELETED') {
             if (payload.post?.id) {
@@ -318,13 +395,16 @@ export class SchedulerService {
             }
           }
         } catch (e) {
-          console.error('Failed to parse SSE payload', e);
+          console.error('[SSE] Failed to parse SSE payload', e);
         }
       };
 
-      this.eventSource.onerror = () => {};
+      this.eventSource.onmessage = handleEvent;
+      this.eventSource.onerror = (err) => {
+        console.warn('[SSE] EventSource connection state:', this.eventSource?.readyState, err);
+      };
     } catch (e) {
-      console.error('Failed to connect to SSE events stream', e);
+      console.error('[SSE] Failed to connect to SSE events stream', e);
     }
   }
 
