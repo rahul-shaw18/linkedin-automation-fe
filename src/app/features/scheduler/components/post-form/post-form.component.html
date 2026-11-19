@@ -1,5 +1,7 @@
-<div class="bg-white rounded-2xl border border-secondary-200/80 shadow-xs p-6 mb-8">
-  <header class="flex items-center justify-between pb-4 mb-4 border-b border-secondary-100">
+<div class="bg-white rounded-2xl border border-secondary-200/80 shadow-xs p-4 sm:p-6 mb-6 sm:mb-8">
+  <header
+    class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-3 sm:pb-4 mb-4 border-b border-secondary-100"
+  >
     <div>
       <h2 class="text-base font-bold text-secondary-900 tracking-tight flex items-center gap-2">
         <span>Compose Scheduled Post</span>
@@ -9,7 +11,9 @@
       </p>
     </div>
 
-    <app-progress [value]="characterCount()" [max]="3000" label="Length" class="w-32" />
+    <div class="self-end sm:self-auto">
+      <app-progress [value]="characterCount()" [max]="3000" label="Length" class="w-28 sm:w-32" />
+    </div>
   </header>
 
   <form (submit)="onSubmit($event)" class="space-y-4">
@@ -119,6 +123,7 @@
         [size]="'lg'"
         [loading]="state.isActionLoading()"
         [disabled]="postForm().invalid() || !state.activeAccount() || state.isAccountLoading()"
+        class="w-full sm:w-auto justify-center"
       >
         <app-icon
           name="send"

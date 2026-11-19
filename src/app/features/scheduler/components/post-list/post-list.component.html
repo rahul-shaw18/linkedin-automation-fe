@@ -9,14 +9,14 @@
 
     <nav
       rdxTabsList
-      class="inline-flex items-center p-1 bg-secondary-100 rounded-xl text-xs font-semibold gap-1"
+      class="flex items-center p-1 bg-secondary-100 rounded-xl text-xs font-semibold gap-1 overflow-x-auto max-w-full scrollbar-none sm:inline-flex"
       aria-label="Filter posts by status"
     >
       <button
         rdxTabsTab
         value="ALL"
         type="button"
-        class="px-3 py-1.5 rounded-lg transition-all cursor-pointer data-[state=active]:bg-white data-[state=active]:text-secondary-900 data-[state=active]:shadow-xs data-[active]:bg-white data-[active]:text-secondary-900 data-[active]:shadow-xs text-secondary-600 hover:text-secondary-900 focus-visible:outline-2 focus-visible:outline-primary-600"
+        class="px-2.5 sm:px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap shrink-0 data-[state=active]:bg-white data-[state=active]:text-secondary-900 data-[state=active]:shadow-xs data-[active]:bg-white data-[active]:text-secondary-900 data-[active]:shadow-xs text-secondary-600 hover:text-secondary-900 focus-visible:outline-2 focus-visible:outline-primary-600"
       >
         All ({{ state.counts().all }})
       </button>
@@ -24,7 +24,7 @@
         rdxTabsTab
         value="PENDING"
         type="button"
-        class="px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 data-[state=active]:bg-white data-[state=active]:text-warning-800 data-[state=active]:shadow-xs data-[active]:bg-white data-[active]:text-warning-800 data-[active]:shadow-xs text-secondary-600 hover:text-secondary-900 focus-visible:outline-2 focus-visible:outline-warning-600"
+        class="px-2.5 sm:px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1.5 data-[state=active]:bg-white data-[state=active]:text-warning-800 data-[state=active]:shadow-xs data-[active]:bg-white data-[active]:text-warning-800 data-[active]:shadow-xs text-secondary-600 hover:text-secondary-900 focus-visible:outline-2 focus-visible:outline-warning-600"
       >
         <span class="w-1.5 h-1.5 rounded-full bg-warning-500 animate-pulse"></span>
         Pending ({{ state.counts().pending }})
@@ -33,7 +33,7 @@
         rdxTabsTab
         value="PUBLISHED"
         type="button"
-        class="px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 data-[state=active]:bg-white data-[state=active]:text-success-800 data-[state=active]:shadow-xs data-[active]:bg-white data-[active]:text-success-800 data-[active]:shadow-xs text-secondary-600 hover:text-secondary-900 focus-visible:outline-2 focus-visible:outline-success-600"
+        class="px-2.5 sm:px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1.5 data-[state=active]:bg-white data-[state=active]:text-success-800 data-[state=active]:shadow-xs data-[active]:bg-white data-[active]:text-success-800 data-[active]:shadow-xs text-secondary-600 hover:text-secondary-900 focus-visible:outline-2 focus-visible:outline-success-600"
       >
         <span class="w-1.5 h-1.5 rounded-full bg-success-500"></span>
         Published ({{ state.counts().published }})
@@ -42,7 +42,7 @@
         rdxTabsTab
         value="FAILED"
         type="button"
-        class="px-3 py-1.5 rounded-lg transition-all cursor-pointer flex items-center gap-1.5 data-[state=active]:bg-white data-[state=active]:text-error-800 data-[state=active]:shadow-xs data-[active]:bg-white data-[active]:text-error-800 data-[active]:shadow-xs text-secondary-600 hover:text-secondary-900 focus-visible:outline-2 focus-visible:outline-error-600"
+        class="px-2.5 sm:px-3 py-1.5 rounded-lg transition-all cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1.5 data-[state=active]:bg-white data-[state=active]:text-error-800 data-[state=active]:shadow-xs data-[active]:bg-white data-[active]:text-error-800 data-[active]:shadow-xs text-secondary-600 hover:text-secondary-900 focus-visible:outline-2 focus-visible:outline-error-600"
       >
         <span class="w-1.5 h-1.5 rounded-full bg-error-500"></span>
         Failed ({{ state.counts().failed }})

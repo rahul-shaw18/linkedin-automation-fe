@@ -47,9 +47,16 @@ export function getErrorMessage(error: HttpErrorResponse): string {
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const toastManager = inject(RdxToastManager);
 
+  // Suppress popups for silent background queries (health, session check, SSE)
+  const isSilent =
+    req.context.get(SKIP_ERROR_NOTIFICATION) ||
+    req.url.includes('/health') ||
+    req.url.includes('/auth/linkedin/me') ||
+    req.url.includes('/posts/events/');
+
   return next(req).pipe(
     catchError((err: unknown) => {
-      if (err instanceof HttpErrorResponse && !req.context.get(SKIP_ERROR_NOTIFICATION)) {
+      if (err instanceof HttpErrorResponse && !isSilent) {
         const errorMsg = getErrorMessage(err);
         const now = Date.now();
         if (errorMsg !== lastErrorMsg || now - lastErrorTime > 2000) {
