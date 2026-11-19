@@ -1,9 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
 import {
-  RdxAvatarRootDirective,
-  RdxAvatarFallbackDirective,
-} from '@radix-ng/primitives/avatar';
-import {
   RdxMenuRoot,
   RdxMenuTrigger,
   RdxMenuPortal,
@@ -27,8 +23,6 @@ import { IconComponent } from '../ui/icon/icon.component';
 @Component({
   selector: 'app-navbar',
   imports: [
-    RdxAvatarRootDirective,
-    RdxAvatarFallbackDirective,
     RdxMenuRoot,
     RdxMenuTrigger,
     RdxMenuPortal,
