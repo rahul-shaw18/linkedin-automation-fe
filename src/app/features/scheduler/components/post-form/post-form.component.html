@@ -12,7 +12,7 @@
     <app-progress [value]="characterCount()" [max]="3000" label="Length" class="w-32" />
   </header>
 
-  <form [formRoot]="postForm" class="space-y-4">
+  <form (submit)="onSubmit($event)" class="space-y-4">
     @if (state.isAccountLoading()) {
       <div
         class="p-3 bg-secondary-50/80 rounded-xl border border-secondary-200/70 space-y-2 animate-pulse"
@@ -117,7 +117,7 @@
         [type]="'submit'"
         [variant]="'primary'"
         [size]="'lg'"
-        [loading]="postForm().submitting() || state.isActionLoading()"
+        [loading]="state.isActionLoading()"
         [disabled]="postForm().invalid() || !state.activeAccount() || state.isAccountLoading()"
       >
         <app-icon

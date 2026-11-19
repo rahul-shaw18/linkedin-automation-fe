@@ -58,11 +58,8 @@ export class NavbarComponent {
   confirmDisconnect(): void {
     const account = this.state.activeAccount();
     if (account) {
-      this.state.disconnectAccount(account.id, () => {
-        this.disconnectDialogOpen.set(false);
-      });
-    } else {
-      this.disconnectDialogOpen.set(false);
+      this.state.disconnectAccount(account.id);
     }
+    this.disconnectDialogOpen.set(false);
   }
 }

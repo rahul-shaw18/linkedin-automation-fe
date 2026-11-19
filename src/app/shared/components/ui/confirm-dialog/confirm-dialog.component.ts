@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, model, output } from '@angular/core';
 import {
   RdxAlertDialogRoot,
   RdxAlertDialogTrigger,
@@ -27,6 +27,8 @@ import { ButtonComponent } from '../button/button.component';
   templateUrl: './confirm-dialog.component.html',
 })
 export class ConfirmDialogComponent {
+  readonly open = model<boolean>(false);
+  readonly showTrigger = input<boolean>(false);
   readonly title = input.required<string>();
   readonly description = input.required<string>();
   readonly confirmText = input<string>('Confirm');

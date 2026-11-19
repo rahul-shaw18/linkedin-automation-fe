@@ -22,6 +22,7 @@ export type AppIconName =
   | 'ellipsis'
   | 'copy'
   | 'trash'
+  | 'edit'
   | 'building'
   | 'user'
   | 'linkedin';

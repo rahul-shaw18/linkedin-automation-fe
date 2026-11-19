@@ -6,7 +6,7 @@ import {
   LinkedInAccount,
   ScheduledPost,
   SchedulePostRequest,
-  HealthResponse,
+  UpdatePostRequest,
 } from '../models/linkedin.model';
 
 @Service()
@@ -48,13 +48,20 @@ export class ApiService {
     });
   }
 
-  schedulePost(dto: SchedulePostRequest): Observable<ScheduledPost> {
-    return this.http.post<ScheduledPost>(`${this.baseUrl}/posts/schedule`, dto);
+  schedulePost(payload: SchedulePostRequest): Observable<ScheduledPost> {
+    return this.http.post<ScheduledPost>(`${this.baseUrl}/posts/schedule`, payload);
   }
 
-  cancelPost(postId: string): Observable<{ success: boolean; message: string }> {
+  deletePost(postId: string): Observable<{ success: boolean; message: string }> {
     return this.http.delete<{ success: boolean; message: string }>(
       `${this.baseUrl}/posts/${encodeURIComponent(postId)}`,
+    );
+  }
+
+  updatePost(postId: string, payload: UpdatePostRequest): Observable<ScheduledPost> {
+    return this.http.patch<ScheduledPost>(
+      `${this.baseUrl}/posts/${encodeURIComponent(postId)}`,
+      payload,
     );
   }
 

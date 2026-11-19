@@ -221,7 +221,7 @@
                             rdxCalendarCellTrigger
                             [day]="weekDate"
                             [month]="month.value"
-                            class="size-7 mx-auto rounded-lg text-xs font-medium flex items-center justify-center cursor-pointer transition-all select-none text-secondary-800 hover:bg-secondary-200/70 data-[outside-view]:text-secondary-300 data-[outside-view]:opacity-40 data-[disabled]:opacity-25 data-[disabled]:cursor-not-allowed data-[today]:not-data-[selected]:border data-[today]:not-data-[selected]:border-primary-400 data-[today]:not-data-[selected]:text-primary-600 data-[today]:not-data-[selected]:font-bold data-[selected]:bg-primary-600 data-[selected]:!text-white data-[selected]:font-bold data-[selected]:shadow-2xs data-[selected]:border-transparent"
+                            class="size-7 mx-auto rounded-lg text-xs font-medium flex items-center justify-center cursor-pointer transition-all select-none text-secondary-800 hover:bg-secondary-200/70 data-outside-view:text-secondary-300 data-outside-view:opacity-40 data-disabled:opacity-25 data-disabled:cursor-not-allowed data-today:not-data-selected:border data-today:not-data-selected:border-primary-400 data-today:not-data-selected:text-primary-600 data-today:not-data-selected:font-bold data-selected:bg-primary-600 data-selected:text-white! data-selected:font-bold data-selected:shadow-2xs data-selected:border-transparent"
                           >
                             {{ weekDate.day }}
                           </div>
@@ -256,7 +256,7 @@
                 <button
                   rdxSelectTrigger
                   type="button"
-                  class="inline-flex items-center justify-between gap-1 px-2.5 h-8 text-xs font-semibold rounded-lg bg-white border border-secondary-200 hover:border-primary-400 text-secondary-800 shadow-2xs transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500/20 data-[popup-open]:border-primary-500 data-[popup-open]:ring-2 data-[popup-open]:ring-primary-500/20 min-w-14"
+                  class="inline-flex items-center justify-between gap-1 px-2.5 h-8 text-xs font-semibold rounded-lg bg-white border border-secondary-200 hover:border-primary-400 text-secondary-800 shadow-2xs transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500/20 data-popup-open:border-primary-500 data-popup-open:ring-2 data-popup-open:ring-primary-500/20 min-w-14"
                   aria-label="Select hour"
                 >
                   <span #vh="rdxSelectedValue" rdxSelectValue>{{
@@ -275,14 +275,14 @@
                   <div
                     rdxSelectPopup
                     (pointerDownOutside)="onHourOpenChange(false)"
-                    class="max-h-48 overflow-y-auto w-20 p-1 bg-white rounded-xl shadow-xl border border-secondary-200 text-xs focus:outline-none data-[side]:animate-in data-[side]:fade-in data-[side]:zoom-in-95 data-[side]:duration-150"
+                    class="max-h-48 overflow-y-auto w-20 p-1 bg-white rounded-xl shadow-xl border border-secondary-200 text-xs focus:outline-none data-side:animate-in data-[side]:fade-in data-side:zoom-in-95 data-side:duration-150"
                   >
                     <div rdxSelectList class="space-y-0.5">
                       @for (hour of hoursList; track hour) {
                         <div
                           [value]="hour"
                           rdxSelectItem
-                          class="flex items-center justify-between px-2 py-1.5 rounded-lg text-xs cursor-pointer select-none text-secondary-700 hover:bg-secondary-100 data-[highlighted]:bg-secondary-100 data-[selected]:bg-primary-50 data-[selected]:text-primary-700 data-[selected]:font-bold font-medium outline-none transition-colors"
+                          class="flex items-center justify-between px-2 py-1.5 rounded-lg text-xs cursor-pointer select-none text-secondary-700 hover:bg-secondary-100 data-highlighted:bg-secondary-100 data-selected:bg-primary-50 data-selected:text-primary-700 data-selected:font-bold font-medium outline-none transition-colors"
                         >
                           <span rdxSelectItemText>{{ hour }}</span>
                           <span rdxSelectItemIndicator class="text-primary-600">
@@ -308,7 +308,7 @@
                 <button
                   rdxSelectTrigger
                   type="button"
-                  class="inline-flex items-center justify-between gap-1 px-2.5 h-8 text-xs font-semibold rounded-lg bg-white border border-secondary-200 hover:border-primary-400 text-secondary-800 shadow-2xs transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500/20 data-[popup-open]:border-primary-500 data-[popup-open]:ring-2 data-[popup-open]:ring-primary-500/20 min-w-14"
+                  class="inline-flex items-center justify-between gap-1 px-2.5 h-8 text-xs font-semibold rounded-lg bg-white border border-secondary-200 hover:border-primary-400 text-secondary-800 shadow-2xs transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500/20 data-popup-open:border-primary-500 data-popup-open:ring-2 data-popup-open:ring-primary-500/20 min-w-14"
                   aria-label="Select minute"
                 >
                   <span #vm="rdxSelectedValue" rdxSelectValue>{{
@@ -327,14 +327,14 @@
                   <div
                     rdxSelectPopup
                     (pointerDownOutside)="onMinuteOpenChange(false)"
-                    class="max-h-48 overflow-y-auto w-20 p-1 bg-white rounded-xl shadow-xl border border-secondary-200 text-xs focus:outline-none data-[side]:animate-in data-[side]:fade-in data-[side]:zoom-in-95 data-[side]:duration-150"
+                    class="max-h-48 overflow-y-auto w-20 p-1 bg-white rounded-xl shadow-xl border border-secondary-200 text-xs focus:outline-none data-side:animate-in data-[side]:fade-in data-side:zoom-in-95 data-side:duration-150"
                   >
                     <div rdxSelectList class="space-y-0.5">
                       @for (minute of minutesList; track minute) {
                         <div
                           [value]="minute"
                           rdxSelectItem
-                          class="flex items-center justify-between px-2 py-1.5 rounded-lg text-xs cursor-pointer select-none text-secondary-700 hover:bg-secondary-100 data-[highlighted]:bg-secondary-100 data-[selected]:bg-primary-50 data-[selected]:text-primary-700 data-[selected]:font-bold font-medium outline-none transition-colors"
+                          class="flex items-center justify-between px-2 py-1.5 rounded-lg text-xs cursor-pointer select-none text-secondary-700 hover:bg-secondary-100 data-highlighted:bg-secondary-100 data-selected:bg-primary-50 data-selected:text-primary-700 data-selected:font-bold font-medium outline-none transition-colors"
                         >
                           <span rdxSelectItemText>{{ minute }}</span>
                           <span rdxSelectItemIndicator class="text-primary-600">

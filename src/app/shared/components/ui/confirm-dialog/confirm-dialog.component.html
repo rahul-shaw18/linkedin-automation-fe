@@ -1,7 +1,9 @@
-<div rdxAlertDialogRoot>
-  <button rdxAlertDialogTrigger type="button" class="cursor-pointer">
-    <ng-content select="[trigger]" />
-  </button>
+<div rdxAlertDialogRoot [(open)]="open">
+  @if (showTrigger()) {
+    <button rdxAlertDialogTrigger type="button" class="cursor-pointer">
+      <ng-content select="[trigger]" />
+    </button>
+  }
 
   <ng-template rdxAlertDialogPortal>
     <div

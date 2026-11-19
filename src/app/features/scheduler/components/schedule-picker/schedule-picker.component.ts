@@ -216,13 +216,6 @@ export class SchedulePickerComponent {
     }
   }
 
-  setPeriod(period: 'AM' | 'PM'): void {
-    this.selectedPeriod.set(period);
-    this.closeTimePickers();
-    this.selectedPreset.set('custom');
-    this.syncTargetTimeFromPickers();
-  }
-
   setQuickOffset(hours: number): void {
     const target = new Date(Date.now() + hours * 3600 * 1000);
     this.targetTime.set(target);

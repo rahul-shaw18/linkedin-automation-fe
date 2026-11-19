@@ -42,6 +42,11 @@ export interface SchedulePostRequest {
   scheduledTime: string;
 }
 
+export interface UpdatePostRequest {
+  content?: string;
+  scheduledTime?: string;
+}
+
 export interface HealthResponse {
   status: string;
   timestamp: string;

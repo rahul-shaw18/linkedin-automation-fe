@@ -1,8 +1,10 @@
-import { Component, OnInit, inject, input } from '@angular/core';
+import { Component, effect, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
+import { httpResource } from '@angular/common/http';
 import { RdxToastManager } from '@radix-ng/primitives/toast';
 import { ApiService } from '../../core/services/api.service';
 import { SchedulerService } from '../scheduler/services/scheduler.service';
+import { LinkedInAccount } from '../../core/models/linkedin.model';
 import { IconComponent } from '../../shared/components/ui/icon/icon.component';
 
 @Component({
@@ -10,31 +12,42 @@ import { IconComponent } from '../../shared/components/ui/icon/icon.component';
   imports: [IconComponent],
   templateUrl: './oauth-callback.component.html',
 })
-export class OAuthCallbackComponent implements OnInit {
+export class OAuthCallbackComponent {
   private readonly router = inject(Router);
   private readonly api = inject(ApiService);
   private readonly toastManager = inject(RdxToastManager);
   private readonly state = inject(SchedulerService);
 
   readonly code = input<string>();
-  readonly oauthState = input<string>(undefined, { alias: 'state' });
 
-  ngOnInit(): void {
-    const code = this.code();
+  // Resource API for handling the OAuth callback reaction
+  readonly oauthResource = httpResource<LinkedInAccount>(() => {
+    const authCode = this.code();
+    return authCode
+      ? {
+          url: `${this.api.baseUrl}/auth/linkedin/callback`,
+          method: 'POST',
+          body: { code: authCode },
+        }
+      : undefined;
+  });
 
-    if (!code) {
-      this.toastManager.add({
-        type: 'error',
-        title: 'Error',
-        description: 'OAuth callback missing authorization code.',
-        priority: 'high',
-      });
-      this.router.navigate(['/']);
-      return;
-    }
+  constructor() {
+    effect(() => {
+      const authCode = this.code();
+      if (!authCode && authCode !== undefined) {
+        this.toastManager.add({
+          type: 'error',
+          title: 'Error',
+          description: 'OAuth callback missing authorization code.',
+          priority: 'high',
+        });
+        this.router.navigate(['/']);
+        return;
+      }
 
-    this.api.handleOAuthCallback(code).subscribe({
-      next: (account) => {
+      if (this.oauthResource.status() === 'resolved') {
+        const account = this.oauthResource.value();
         if (account) {
           this.state.currentUserId.set(account.userId);
           this.state.accounts.set([account]);
@@ -48,11 +61,9 @@ export class OAuthCallbackComponent implements OnInit {
           priority: 'low',
         });
         this.router.navigate(['/']);
-      },
-      error: () => {
+      } else if (this.oauthResource.status() === 'error') {
         this.router.navigate(['/']);
-      },
+      }
     });
   }
 }
-

@@ -6,7 +6,11 @@
       <app-post-status-badge [status]="post().status" />
 
       <span class="text-xs text-secondary-500">
-        Scheduled:
+        @if (post().status === 'PUBLISHED') {
+          Published:
+        } @else {
+          Scheduled:
+        }
         <time [dateTime]="post().scheduledTime" class="font-bold text-secondary-700">{{
           post().scheduledTime | date: 'medium'
         }}</time>
@@ -15,25 +19,19 @@
 
     <div class="flex items-center gap-1.5">
       @if (post().status === 'PENDING') {
-        <app-confirm-dialog
-          [title]="'Cancel scheduled post?'"
-          [description]="'This post will be removed from your execution queue and will not be published to LinkedIn.'"
-          [confirmText]="'Yes, Cancel Post'"
-          [cancelText]="'Keep in Queue'"
-          [confirmVariant]="'destructive'"
-          (confirmed)="onCancel()"
+        <button
+          appButton
+          [variant]="'ghost'"
+          [size]="'sm'"
+          (click)="openDelete()"
+          class="text-secondary-500 hover:text-error-600 hover:bg-error-50 border border-transparent hover:border-error-100"
         >
-          <span
-            trigger
-            class="group inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-secondary-500 hover:text-error-600 hover:bg-error-50 rounded-lg transition-colors border border-transparent hover:border-error-100 cursor-pointer"
-          >
-            <app-icon
-              name="x"
-              class="text-xs transition-transform duration-200 group-hover:scale-110"
-            />
-            <span>Cancel</span>
-          </span>
-        </app-confirm-dialog>
+          <app-icon
+            name="x"
+            class="text-xs transition-transform duration-200 group-hover:scale-110"
+          />
+          <span>Cancel</span>
+        </button>
       }
 
       @if (post().status === 'FAILED') {
@@ -48,10 +46,12 @@
 
       <ng-container #postMenu="rdxMenuRoot" rdxMenuRoot>
         <button
+          appButton
+          [variant]="'ghost'"
+          [size]="'icon'"
           rdxMenuTrigger
-          type="button"
           aria-label="Post actions"
-          class="p-1 text-secondary-400 hover:text-secondary-700 hover:bg-secondary-100 rounded-lg transition-colors cursor-pointer data-[popup-open]:bg-secondary-100 data-[popup-open]:text-secondary-800"
+          class="text-secondary-400 hover:text-secondary-700 data-popup-open:bg-secondary-100 data-popup-open:text-secondary-800"
         >
           <app-icon name="ellipsis" class="text-base" />
         </button>
@@ -61,16 +61,29 @@
           rdxMenuPositioner
           sideOffset="4"
           align="end"
-          class="z-50 not-data-[side]:invisible"
+          class="z-50 not-data-side:invisible"
         >
           <menu
-            class="w-48 p-1.5 bg-white rounded-xl shadow-xl border border-secondary-200 text-xs focus:outline-none data-[side]:animate-in data-[side]:fade-in data-[side]:zoom-in-95 data-[side]:duration-150 list-none m-0"
+            class="w-52 p-1.5 bg-white rounded-xl shadow-xl border border-secondary-200 text-xs focus:outline-none data-side:animate-in data-[side]:fade-in data-side:zoom-in-95 data-side:duration-150 list-none m-0"
           >
+            @if (post().status !== 'PROCESSING') {
+              <li>
+                <button
+                  rdxMenuItem
+                  (click)="openEdit()"
+                  class="flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-secondary-700 hover:text-secondary-900 hover:bg-secondary-100 data-highlighted:bg-secondary-100 data-highlighted:text-secondary-900 transition-colors cursor-pointer select-none text-left font-medium outline-none"
+                >
+                  <app-icon name="edit" class="text-xs text-secondary-500" />
+                  <span>Edit Post</span>
+                </button>
+              </li>
+            }
+
             <li>
               <button
                 rdxMenuItem
                 (click)="copyToClipboard(post().content, 'Post text')"
-                class="flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-secondary-700 hover:text-secondary-900 hover:bg-secondary-100 data-[highlighted]:bg-secondary-100 data-[highlighted]:text-secondary-900 transition-colors cursor-pointer select-none text-left font-medium outline-none"
+                class="flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-secondary-700 hover:text-secondary-900 hover:bg-secondary-100 data-highlighted:bg-secondary-100 data-highlighted:text-secondary-900 transition-colors cursor-pointer select-none text-left font-medium outline-none"
               >
                 <app-icon name="copy" class="text-xs text-secondary-500" />
                 <span>Copy Post Text</span>
@@ -83,7 +96,7 @@
                 <button
                   rdxMenuItem
                   (click)="onRetry()"
-                  class="flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-primary-600 hover:bg-primary-50 data-[highlighted]:bg-primary-50 transition-colors cursor-pointer select-none text-left font-medium outline-none"
+                  class="flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-primary-600 hover:bg-primary-50 data-highlighted:bg-primary-50 transition-colors cursor-pointer select-none text-left font-medium outline-none"
                 >
                   <app-icon name="rotate-ccw" class="text-xs" />
                   <span>Retry Publication</span>
@@ -91,16 +104,22 @@
               </li>
             }
 
-            @if (post().status === 'PENDING') {
+            @if (post().status !== 'PROCESSING') {
               <li rdxMenuSeparator class="h-px bg-secondary-100 my-1"></li>
               <li>
                 <button
                   rdxMenuItem
-                  (click)="onCancel()"
-                  class="flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-error-600 hover:bg-error-50 data-[highlighted]:bg-error-50 transition-colors cursor-pointer select-none text-left font-medium outline-none"
+                  (click)="openDelete()"
+                  class="flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg text-error-600 hover:bg-error-50 data-highlighted:bg-error-50 transition-colors cursor-pointer select-none text-left font-medium outline-none"
                 >
-                  <app-icon name="trash" class="text-xs" />
-                  <span>Cancel Post</span>
+                  <app-icon name="trash" class="text-xs text-error-500" />
+                  <span>
+                    @if (post().status === 'PUBLISHED') {
+                      Delete from LinkedIn
+                    } @else {
+                      Delete Post
+                    }
+                  </span>
                 </button>
               </li>
             }
@@ -127,4 +146,16 @@
       </div>
     </div>
   }
+
+  <app-edit-post-dialog [post]="post()" [(open)]="isEditDialogOpen" />
+
+  <app-confirm-dialog
+    [(open)]="isDeleteDialogOpen"
+    [title]="deleteDialogTitle()"
+    [description]="deleteDialogDescription()"
+    [confirmText]="deleteConfirmText()"
+    [cancelText]="'Keep Post'"
+    [confirmVariant]="'destructive'"
+    (confirmed)="onDeleteConfirmed()"
+  />
 </article>

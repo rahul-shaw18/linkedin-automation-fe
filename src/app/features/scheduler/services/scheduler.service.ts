@@ -1,12 +1,12 @@
-import { computed, effect, inject, signal, Service } from '@angular/core';
+import { computed, effect, inject, signal, untracked, Service } from '@angular/core';
 import { httpResource } from '@angular/common/http';
-import { timeout } from 'rxjs';
 import { RdxToastManager } from '@radix-ng/primitives/toast';
 import { ApiService } from '../../../core/services/api.service';
 import {
   LinkedInAccount,
   ScheduledPost,
   SchedulePostRequest,
+  UpdatePostRequest,
   PostStatus,
   HealthResponse,
 } from '../../../core/models/linkedin.model';
@@ -18,12 +18,15 @@ export class SchedulerService {
 
   readonly currentUserId = signal<string>('');
   readonly filter = signal<'ALL' | PostStatus>('ALL');
-  readonly isActionLoading = signal<boolean>(false);
-  readonly isSessionChecking = signal<boolean>(true);
-  readonly sessionCheckFailed = signal<boolean>(false);
+  readonly session = httpResource<{
+    authenticated: boolean;
+    userId: string | null;
+    account: LinkedInAccount | null;
+  }>(() => `${this.api.baseUrl}/auth/linkedin/me`);
 
   readonly health = httpResource<HealthResponse>(() => `${this.api.baseUrl}/health`);
 
+  // Data resources
   readonly accounts = httpResource<LinkedInAccount[]>(
     () => {
       const uid = this.currentUserId();
@@ -40,33 +43,93 @@ export class SchedulerService {
     { defaultValue: [] },
   );
 
+  private readonly scheduleTrigger = signal<SchedulePostRequest | undefined>(undefined);
+  readonly scheduleResource = httpResource<ScheduledPost>(() => {
+    const payload = this.scheduleTrigger();
+    return payload
+      ? {
+          url: `${this.api.baseUrl}/posts/schedule`,
+          method: 'POST',
+          body: payload,
+        }
+      : undefined;
+  });
+
+  private readonly updateTrigger = signal<{ postId: string; updates: UpdatePostRequest } | undefined>(undefined);
+  readonly updateResource = httpResource<ScheduledPost>(() => {
+    const req = this.updateTrigger();
+    return req
+      ? {
+          url: `${this.api.baseUrl}/posts/${encodeURIComponent(req.postId)}`,
+          method: 'PATCH',
+          body: req.updates,
+        }
+      : undefined;
+  });
+
+  private readonly deleteTrigger = signal<{ postId: string; isPublished: boolean } | undefined>(undefined);
+  readonly deleteResource = httpResource<{ success: boolean; message: string }>(() => {
+    const req = this.deleteTrigger();
+    return req
+      ? {
+          url: `${this.api.baseUrl}/posts/${encodeURIComponent(req.postId)}`,
+          method: 'DELETE',
+        }
+      : undefined;
+  });
+
+  private readonly retryTrigger = signal<string | undefined>(undefined);
+  readonly retryResource = httpResource<ScheduledPost>(() => {
+    const postId = this.retryTrigger();
+    return postId
+      ? {
+          url: `${this.api.baseUrl}/posts/${encodeURIComponent(postId)}/retry`,
+          method: 'POST',
+          body: {},
+        }
+      : undefined;
+  });
+
+  private readonly disconnectTrigger = signal<string | undefined>(undefined);
+  readonly disconnectResource = httpResource<LinkedInAccount>(() => {
+    const accountId = this.disconnectTrigger();
+    return accountId
+      ? {
+          url: `${this.api.baseUrl}/auth/linkedin/accounts/${encodeURIComponent(accountId)}`,
+          method: 'DELETE',
+        }
+      : undefined;
+  });
+
+  private readonly loginTrigger = signal<string | undefined>(undefined);
+  readonly loginResource = httpResource<{ url: string; state: string }>(() => {
+    const trigger = this.loginTrigger();
+    if (trigger === undefined) return undefined;
+    let url = `${this.api.baseUrl}/auth/linkedin/login-url`;
+    if (trigger) url += `?redirectUri=${encodeURIComponent(trigger)}`;
+    return url;
+  });
+
   private eventSource: EventSource | null = null;
 
   constructor() {
-    this.api
-      .getMe()
-      .pipe(timeout({ first: 4000 }))
-      .subscribe({
-        next: (session) => {
-          if (session.authenticated && session.userId) {
-            this.currentUserId.set(session.userId);
-            if (session.account) {
-              this.accounts.set([session.account]);
-            }
-          } else {
-            this.currentUserId.set('');
-            this.accounts.set([]);
-            this.posts.set([]);
+    effect(() => {
+      if (this.session.status() === 'resolved') {
+        const s = this.session.value();
+        if (s?.authenticated && s.userId) {
+          this.currentUserId.set(s.userId);
+          if (s.account) {
+            this.accounts.set([s.account]);
           }
-          this.sessionCheckFailed.set(false);
-          this.isSessionChecking.set(false);
-        },
-        error: () => {
-          this.sessionCheckFailed.set(true);
-          this.isSessionChecking.set(false);
-        },
-      });
+        } else {
+          this.currentUserId.set('');
+          this.accounts.set([]);
+          this.posts.set([]);
+        }
+      }
+    });
 
+    // 2. Reactive SSE connection management
     effect(() => {
       const uid = this.currentUserId();
       if (!uid) {
@@ -76,8 +139,128 @@ export class SchedulerService {
         }
         return;
       }
-
       this.initSse(uid);
+    });
+
+    effect(() => {
+      if (this.scheduleResource.status() === 'resolved') {
+        const newPost = this.scheduleResource.value();
+        if (newPost) {
+          this.posts.update((prev) => [newPost, ...(prev ?? []).filter((p) => p.id !== newPost.id)]);
+          this.toast.add({
+            type: 'success',
+            title: 'Success',
+            description: 'Post successfully scheduled to your LinkedIn feed.',
+            priority: 'low',
+          });
+          untracked(() => this.scheduleTrigger.set(undefined));
+        }
+      } else if (this.scheduleResource.status() === 'error') {
+        untracked(() => this.scheduleTrigger.set(undefined));
+      }
+    });
+
+    effect(() => {
+      if (this.updateResource.status() === 'resolved') {
+        const updated = this.updateResource.value();
+        if (updated) {
+          this.posts.update((prev) =>
+            (prev ?? []).map((p) => (p.id === updated.id ? updated : p)),
+          );
+          this.toast.add({
+            type: 'success',
+            title: updated.status === 'PUBLISHED' ? 'Updated on LinkedIn' : 'Post Updated',
+            description:
+              updated.status === 'PUBLISHED'
+                ? 'Post commentary was updated on LinkedIn and saved.'
+                : 'Post was successfully updated.',
+            priority: 'low',
+          });
+          untracked(() => this.updateTrigger.set(undefined));
+        }
+      } else if (this.updateResource.status() === 'error') {
+        this.posts.reload();
+        untracked(() => this.updateTrigger.set(undefined));
+      }
+    });
+
+    // 5. React to delete post resource resolution
+    effect(() => {
+      if (this.deleteResource.status() === 'resolved') {
+        const trigger = untracked(this.deleteTrigger);
+        const res = this.deleteResource.value();
+        this.toast.add({
+          type: 'success',
+          title: trigger?.isPublished ? 'Deleted from LinkedIn' : 'Post Deleted',
+          description:
+            res?.message ||
+            (trigger?.isPublished
+              ? 'Post was permanently deleted from LinkedIn and removed from database.'
+              : 'Post was removed.'),
+          priority: 'low',
+        });
+        untracked(() => this.deleteTrigger.set(undefined));
+      } else if (this.deleteResource.status() === 'error') {
+        this.posts.reload();
+        untracked(() => this.deleteTrigger.set(undefined));
+      }
+    });
+
+    effect(() => {
+      if (this.retryResource.status() === 'resolved') {
+        const updated = this.retryResource.value();
+        if (updated) {
+          this.posts.update((prev) =>
+            (prev ?? []).map((p) => (p.id === updated.id ? updated : p)),
+          );
+          this.toast.add({
+            type: 'success',
+            title: 'Success',
+            description: 'Post reset to PENDING and will be published shortly.',
+            priority: 'low',
+          });
+          untracked(() => this.retryTrigger.set(undefined));
+        }
+      } else if (this.retryResource.status() === 'error') {
+        this.posts.reload();
+        untracked(() => this.retryTrigger.set(undefined));
+      }
+    });
+
+    effect(() => {
+      if (this.disconnectResource.status() === 'resolved') {
+        this.currentUserId.set('');
+        this.accounts.set([]);
+        this.posts.set([]);
+        this.toast.add({
+          type: 'info',
+          title: 'Notice',
+          description: 'LinkedIn account disconnected.',
+          priority: 'low',
+        });
+        untracked(() => this.disconnectTrigger.set(undefined));
+      } else if (this.disconnectResource.status() === 'error') {
+        untracked(() => this.disconnectTrigger.set(undefined));
+      }
+    });
+
+    effect(() => {
+      if (this.loginResource.status() === 'resolved') {
+        const res = this.loginResource.value();
+        if (res?.url) {
+          window.location.href = res.url;
+        } else {
+          this.toast.add({
+            type: 'error',
+            title: 'Error',
+            description: 'Failed to retrieve LinkedIn login URL',
+            priority: 'high',
+          });
+          untracked(() => this.loginTrigger.set(undefined));
+        }
+      } else if (this.loginResource.status() === 'error') {
+        untracked(() => this.loginTrigger.set(undefined));
+      }
     });
   }
 
@@ -121,6 +304,14 @@ export class SchedulerService {
             this.posts.reload();
           } else if (payload.type === 'POST_PROCESSING') {
             this.posts.reload();
+          } else if (payload.type === 'POST_UPDATED') {
+            this.posts.reload();
+          } else if (payload.type === 'POST_DELETED') {
+            if (payload.post?.id) {
+              this.posts.update((prev) => (prev ?? []).filter((p) => p.id !== payload.post.id));
+            } else {
+              this.posts.reload();
+            }
           }
         } catch (e) {
           console.error('Failed to parse SSE payload', e);
@@ -133,7 +324,22 @@ export class SchedulerService {
     }
   }
 
+
   readonly backendHealth = computed<HealthResponse | null>(() => this.health.value() ?? null);
+
+  readonly isSessionChecking = computed<boolean>(() => this.session.isLoading());
+  readonly sessionCheckFailed = computed<boolean>(() => this.session.status() === 'error');
+
+  readonly isActionLoading = computed<boolean>(() => {
+    return (
+      this.scheduleResource.isLoading() ||
+      this.updateResource.isLoading() ||
+      this.deleteResource.isLoading() ||
+      this.retryResource.isLoading() ||
+      this.disconnectResource.isLoading() ||
+      this.loginResource.isLoading()
+    );
+  });
 
   readonly isAccountLoading = computed<boolean>(() => {
     if (this.sessionCheckFailed() || !!this.accounts.error()) {
@@ -179,10 +385,6 @@ export class SchedulerService {
     };
   });
 
-  readonly isLoading = computed<boolean>(() => {
-    return this.isActionLoading();
-  });
-
   readonly isInitialLoading = computed<boolean>(() => {
     if (this.sessionCheckFailed() || !!this.accounts.error() || !!this.posts.error()) {
       return false;
@@ -196,46 +398,11 @@ export class SchedulerService {
       (this.posts.isLoading() && postsEmpty)
     );
   });
-
-  setFilter(filter: 'ALL' | PostStatus): void {
-    this.filter.set(filter);
-  }
-
-  reloadPosts(): void {
-    this.posts.reload();
-  }
-
-  reloadAccounts(): void {
-    this.accounts.reload();
-  }
-
   connectLinkedIn(redirectUri?: string): void {
-    this.isActionLoading.set(true);
-    this.api.getLoginUrl(undefined, redirectUri).subscribe({
-      next: (res) => {
-        this.isActionLoading.set(false);
-        if (res?.url) {
-          window.location.href = res.url;
-        } else {
-          this.toast.add({
-            type: 'error',
-            title: 'Error',
-            description: 'Failed to retrieve LinkedIn login URL',
-            priority: 'high',
-          });
-        }
-      },
-      error: () => {
-        this.isActionLoading.set(false);
-      },
-    });
+    this.loginTrigger.set(redirectUri ?? '');
   }
 
-  schedulePost(
-    content: string,
-    scheduledTime: string,
-    onComplete?: () => void,
-  ): void {
+  schedulePost(content: string, scheduledTime: string): void {
     const account = this.activeAccount();
     if (!account) {
       this.toast.add({
@@ -247,93 +414,44 @@ export class SchedulerService {
       return;
     }
 
-    this.isActionLoading.set(true);
-    const dto: SchedulePostRequest = {
+    this.scheduleTrigger.set({
       userId: this.currentUserId(),
       accountId: account.id,
       content,
       scheduledTime,
-    };
-
-    this.api.schedulePost(dto).subscribe({
-      next: (newPost) => {
-        this.posts.update((prev) => [newPost, ...(prev ?? [])]);
-        this.toast.add({
-          type: 'success',
-          title: 'Success',
-          description: 'Post successfully scheduled to your LinkedIn feed.',
-          priority: 'low',
-        });
-        this.isActionLoading.set(false);
-        onComplete?.();
-      },
-      error: () => {
-        this.isActionLoading.set(false);
-      },
     });
   }
 
-  cancelPost(postId: string): void {
-    this.isActionLoading.set(true);
-    this.api.cancelPost(postId).subscribe({
-      next: () => {
-        this.posts.update((prev) => (prev ?? []).filter((p) => p.id !== postId));
-        this.toast.add({
-          type: 'info',
-          title: 'Notice',
-          description: 'Post cancelled and deleted.',
-          priority: 'low',
-        });
-        this.isActionLoading.set(false);
-      },
-      error: () => {
-        this.isActionLoading.set(false);
-      },
-    });
+  deletePost(postId: string, isPublished = false): void {
+    // Optimistically update resource
+    this.posts.update((prev) => (prev ?? []).filter((p) => p.id !== postId));
+    this.deleteTrigger.set({ postId, isPublished });
+  }
+
+  updatePost(postId: string, updates: UpdatePostRequest): void {
+    this.posts.update((prev) =>
+      (prev ?? []).map((p) =>
+        p.id === postId
+          ? {
+              ...p,
+              content: updates.content ?? p.content,
+              ...(updates.scheduledTime ? { scheduledTime: updates.scheduledTime } : {}),
+            }
+          : p,
+      ),
+    );
+    this.updateTrigger.set({ postId, updates });
   }
 
   retryPost(postId: string): void {
-    this.isActionLoading.set(true);
-    this.api.retryPost(postId).subscribe({
-      next: (updated) => {
-        this.posts.update((prev) =>
-          (prev ?? []).map((p) => (p.id === postId ? updated : p)),
-        );
-        this.toast.add({
-          type: 'success',
-          title: 'Success',
-          description: 'Post reset to PENDING and will be published shortly.',
-          priority: 'low',
-        });
-        this.isActionLoading.set(false);
-      },
-      error: () => {
-        this.isActionLoading.set(false);
-      },
-    });
+    this.retryTrigger.set(postId);
   }
 
-  disconnectAccount(accountId: string, onComplete?: () => void): void {
-    this.isActionLoading.set(true);
-    this.api.disconnectAccount(accountId).subscribe({
-      next: () => {
-        this.api.logout().subscribe({ next: () => {}, error: () => {} });
-        this.currentUserId.set('');
-        this.accounts.set([]);
-        this.posts.set([]);
-        this.isActionLoading.set(false);
-        this.toast.add({
-          type: 'info',
-          title: 'Notice',
-          description: 'LinkedIn account disconnected.',
-          priority: 'low',
-        });
-        onComplete?.();
-      },
-      error: () => {
-        this.isActionLoading.set(false);
-        onComplete?.();
-      },
-    });
+  disconnectAccount(accountId: string): void {
+    this.disconnectTrigger.set(accountId);
+  }
+
+  setFilter(filter: 'ALL' | PostStatus): void {
+    this.filter.set(filter);
   }
 }
