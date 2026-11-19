@@ -23,7 +23,16 @@
       </div>
 
       <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-        @if (state.activeAccount(); as account) {
+        @if (state.isSessionChecking() || (state.accounts.isLoading() && !state.activeAccount() && !!state.currentUserId())) {
+          <div
+            class="h-8 w-32 sm:w-36 bg-secondary-100 border border-secondary-200/80 rounded-lg animate-pulse flex items-center justify-center gap-2 px-3 shrink-0"
+            role="status"
+            aria-label="Checking account status..."
+          >
+            <div class="h-4 w-4 rounded bg-secondary-200 shrink-0"></div>
+            <div class="h-3 w-16 sm:w-20 bg-secondary-200 rounded"></div>
+          </div>
+        } @else if (state.activeAccount(); as account) {
           <ng-container #accountMenu="rdxMenuRoot" rdxMenuRoot [modal]="false">
             <button
               #accountMenuBtn

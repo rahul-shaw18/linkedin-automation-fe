@@ -19,12 +19,15 @@
   <form (submit)="onSubmit($event)" class="space-y-4">
     @if (state.isAccountLoading()) {
       <div
-        class="p-3 bg-secondary-50/80 rounded-xl border border-secondary-200/70 space-y-2 animate-pulse"
+        class="p-3 bg-secondary-50/80 rounded-xl border border-secondary-200/70 flex items-center gap-2.5 animate-pulse"
         role="status"
         aria-label="Loading account..."
       >
-        <div class="h-3 w-40 bg-secondary-200 rounded"></div>
-        <div class="h-10 w-52 bg-secondary-200 rounded-xl"></div>
+        <div class="w-8 h-8 rounded-full bg-secondary-200 shrink-0"></div>
+        <div class="space-y-1.5 min-w-0 flex-1">
+          <div class="h-3.5 w-36 bg-secondary-200 rounded"></div>
+          <div class="h-2.5 w-56 max-w-full bg-secondary-100 rounded"></div>
+        </div>
       </div>
     } @else if (state.activeAccount(); as account) {
       <div
