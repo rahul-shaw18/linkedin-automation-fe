@@ -262,7 +262,7 @@ export class SchedulerService {
         this.posts.set([]);
         this.toast.add({
           type: 'info',
-          title: 'Notice',
+          title: 'Disconnected',
           description: 'LinkedIn account disconnected.',
           priority: 'low',
         });
