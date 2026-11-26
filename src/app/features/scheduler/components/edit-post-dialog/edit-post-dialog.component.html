@@ -102,7 +102,7 @@
                 id="post-edit-time"
                 type="datetime-local"
                 [formField]="editForm.scheduledTime"
-                class="w-full text-xs text-secondary-800 bg-secondary-50/60 border border-secondary-200 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all"
+                class="w-full text-xs text-secondary-800 bg-secondary-50/60 border border-secondary-200 rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all font-mono"
               />
             </div>
             @if (editForm.scheduledTime().touched() && editForm.scheduledTime().invalid()) {
@@ -119,7 +119,7 @@
         } @else {
           <div class="text-xs text-secondary-500 flex items-center gap-1.5 py-1">
             <app-icon name="clock" class="text-xs text-secondary-400" />
-            <span>Originally published: <strong class="text-secondary-700">{{ post().scheduledTime | date: 'medium' }}</strong></span>
+            <span>Originally published: <strong class="text-secondary-700">{{ post().scheduledTime | date: 'MMM d, y, h:mm a' }}</strong></span>
           </div>
         }
       </div>

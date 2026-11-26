@@ -72,9 +72,15 @@
     <div class="flex items-center gap-2">
       <span class="text-xs font-medium text-secondary-600">Target Time:</span>
       <output
-        class="text-xs font-semibold px-2 py-0.5 rounded-md bg-white border border-secondary-200 text-secondary-800 shadow-2xs"
+        class="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-white border border-secondary-200 text-secondary-800 shadow-2xs inline-flex items-center gap-1.5"
       >
-        {{ formattedScheduledTime() }}
+        <span>{{ formattedScheduledTime() }}</span>
+        @if (selectedPreset() === 'now') {
+          <span class="relative flex h-2 w-2" title="Updating in real-time">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+        }
       </output>
     </div>
 
@@ -82,7 +88,7 @@
       <button
         rdxPopoverTrigger
         type="button"
-        class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-white border border-secondary-200 hover:border-primary-400 hover:text-primary-600 text-secondary-700 shadow-2xs transition-all cursor-pointer data-[popup-open]:border-primary-500 data-[popup-open]:ring-2 data-[popup-open]:ring-primary-500/20 w-full sm:w-auto"
+        class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-white border border-secondary-200 hover:border-primary-400 hover:text-primary-600 text-secondary-700 shadow-2xs transition-all cursor-pointer data-popup-open:border-primary-500 data-popup-open:ring-2 data-popup-open:ring-primary-500/20 w-full sm:w-auto"
       >
         <app-icon name="clock" class="text-xs text-secondary-500" />
         <span>Pick Exact Date & Time</span>
@@ -93,11 +99,11 @@
         rdxPopoverPositioner
         sideOffset="8"
         align="center"
-        class="z-50 not-data-[side]:invisible max-w-[calc(100vw-24px)]"
+        class="z-50 not-data-side:invisible max-w-[calc(100vw-24px)]"
       >
         <div
           rdxPopoverPopup
-          class="w-[min(calc(100vw-24px),356px)] p-3.5 sm:p-4 bg-white rounded-2xl shadow-xl border border-secondary-200 text-xs focus:outline-none space-y-3 sm:space-y-3.5 max-h-[85vh] overflow-y-auto data-[side]:animate-in data-[side]:fade-in data-[side]:zoom-in-95 data-[side]:duration-150"
+          class="w-[min(calc(100vw-24px),356px)] p-3.5 sm:p-4 bg-white rounded-2xl shadow-xl border border-secondary-200 text-xs focus:outline-none space-y-3 sm:space-y-3.5 max-h-[85vh] overflow-y-auto data-side:animate-in data-[side]:fade-in data-side:zoom-in-95 data-side:duration-150"
         >
           <header class="flex items-center justify-between pb-2 border-b border-secondary-100">
             <div>

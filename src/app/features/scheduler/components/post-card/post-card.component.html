@@ -12,7 +12,7 @@
           Scheduled:
         }
         <time [dateTime]="post().scheduledTime" class="font-bold text-secondary-700">{{
-          post().scheduledTime | date: 'medium'
+          post().scheduledTime | date: 'MMM d, y, h:mm a'
         }}</time>
       </span>
     </div>

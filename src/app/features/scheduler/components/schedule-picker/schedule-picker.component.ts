@@ -1,4 +1,4 @@
-import { Component, computed, model, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, model, signal } from '@angular/core';
 import { CalendarDate, DateValue, getLocalTimeZone, today } from '@internationalized/date';
 import {
   RdxCalendarCellDirective,
@@ -84,9 +84,12 @@ export type SchedulePreset = 'now' | '15min' | 'tonight' | 'tomorrow' | 'custom'
   templateUrl: './schedule-picker.component.html',
 })
 export class SchedulePickerComponent {
-  readonly targetTime = model<Date>(new Date(Date.now() - 60 * 1000));
+  private readonly destroyRef = inject(DestroyRef);
+
+  readonly targetTime = model<Date>(new Date(Date.now() - 10 * 1000));
 
   readonly selectedPreset = signal<SchedulePreset>('now');
+  readonly currentTime = signal<Date>(new Date());
   readonly displayTime = signal<Date>(new Date());
 
   readonly hoursList = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'];
@@ -113,8 +116,29 @@ export class SchedulePickerComponent {
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+      hour12: true,
     });
   });
+
+  constructor() {
+    const timer = setInterval(() => {
+      const now = new Date();
+      this.currentTime.set(now);
+      const preset = this.selectedPreset();
+      if (preset === 'now') {
+        this.displayTime.set(now);
+        this.targetTime.set(new Date(now.getTime() - 10 * 1000));
+      } else if (preset === '15min') {
+        const target = new Date(now.getTime() + 15 * 60 * 1000);
+        this.displayTime.set(target);
+        this.targetTime.set(target);
+      }
+    }, 1000);
+
+    this.destroyRef.onDestroy(() => {
+      clearInterval(timer);
+    });
+  }
 
   reset(): void {
     this.setPreset('now');
@@ -125,8 +149,8 @@ export class SchedulePickerComponent {
     const now = new Date();
 
     if (preset === 'now') {
-      const past = new Date(now.getTime() - 60 * 1000);
-      this.targetTime.set(past);
+      const immediate = new Date(now.getTime() - 10 * 1000);
+      this.targetTime.set(immediate);
       this.displayTime.set(now);
       this.syncPickersFromDate(now);
     } else if (preset === '15min') {
